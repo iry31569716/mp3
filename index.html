@@ -1,0 +1,1296 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#f7f8fa">
+  <meta name="description" content="轻集个人文件库：自动分类、批量收藏和紧凑预览。">
+  <title>轻集 · 我的文件库</title>
+  <style>
+:root {
+  color-scheme: light;
+  --bg: #f7f8fa; --panel: #fff; --ink: #252a39; --muted: #7d8594;
+  --line: #e9ecf1; --accent: #7163ce; --accent-soft: #f0edfb; --hover: #f8f7fc;
+  --green: #69a58c; --danger: #b75660; --shadow: 0 14px 48px #21203512;
+  --image-bg: #eeebfb; --audio-bg: #e9f3ef; --doc-bg: #e9effa; --other-bg: #f9f0e4;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; }
+button, input, select { font: inherit; -webkit-tap-highlight-color: transparent; }
+button { cursor: pointer; border: 1px solid transparent; background: none; color: inherit; display: inline-flex; align-items: center; justify-content: center; gap: 8px; border-radius: 9px; min-height: 40px; padding: 8px 13px; }
+button:hover { background: var(--hover); }
+button:disabled { opacity: .45; cursor: default; }
+a { color: inherit; text-decoration: none; }
+svg { width: 20px; height: 20px; flex-shrink: 0; vertical-align: middle; }
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+input[type=checkbox] { width: 17px; height: 17px; accent-color: var(--accent); margin: 0; cursor: pointer; flex-shrink: 0; }
+[hidden] { display: none !important; }
+.sidebar { position: fixed; inset: 0 auto 0 0; width: 230px; background: var(--panel); border-right: 1px solid var(--line); padding: 32px 18px 18px; display: flex; flex-direction: column; overflow-y: auto; }
+.brand { display: flex; align-items: center; gap: 12px; margin: 0 15px 36px; font-size: 24px; font-weight: 650; letter-spacing: 2px; }
+.brand-mark { display: grid; place-items: center; width: 42px; height: 42px; background: var(--accent); color: #fff; border-radius: 13px; }
+.brand-mark svg { width: 26px; height: 26px; }
+.brand-en { display: block; font-size: 8px; letter-spacing: 2.3px; color: var(--muted); }
+.nav-caption { font-size: 11px; letter-spacing: 1px; color: var(--muted); margin-left: 13px; }
+.nav-item { width: 100%; justify-content: flex-start; gap: 11px; min-height: 43px; margin: 3px 0; padding: 9px 12px; color: var(--muted); font-size: 13px; text-align: left; }
+.nav-item.active, .collection-row.active { background: var(--accent-soft); color: var(--accent); font-weight: 600; border-radius: 9px; }
+.collection-row.active .nav-item { color: var(--accent); }
+.nav-item svg { width: 18px; height: 18px; }
+.nav-count { margin-left: auto; font-size: 11px; opacity: .85; }
+.collection-heading { display: flex; align-items: center; justify-content: space-between; margin: 22px 0 4px; }
+.icon-button { width: 40px; min-width: 40px; padding: 9px; color: var(--muted); }
+.collection-row { display: flex; align-items: center; min-width: 0; }
+.collection-row .nav-item { min-width: 0; flex: 1; gap: 8px; padding-right: 0; }
+.collection-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.collection-more { width: 32px; min-width: 32px; padding: 7px; }
+.collection-more svg { width: 16px; }
+.collection-tip { font-size: 10px; line-height: 1.9; color: var(--muted); margin: 13px; }
+.sidebar-bottom { margin-top: auto; padding-top: 25px; }
+.repository { display: flex; align-items: center; gap: 11px; border-top: 1px solid var(--line); padding: 20px 10px 12px; }
+.repository strong { font-size: 12px; font-weight: 600; }
+.repository small { display: block; font-size: 10px; color: var(--muted); }
+.status-dot { width: 6px; height: 6px; background: var(--green); border-radius: 50%; margin-left: auto; }
+.quiet { color: var(--muted); font-size: 12px; }
+.full { width: 100%; justify-content: flex-start; }
+.workspace { margin-left: 230px; }
+.topbar { height: 76px; border-bottom: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; padding: 0 38px; background: var(--panel); }
+.crumb { display: flex; align-items: center; gap: 15px; color: var(--muted); font-size: 11px; }
+.crumb svg { width: 16px; }
+.crumb strong { font-weight: 500; }
+.top-actions { display: flex; align-items: center; gap: 12px; }
+.connection { font-size: 11px; color: var(--muted); }
+.connection::before { content: ''; display: inline-block; width: 5px; height: 5px; border-radius: 50%; background: var(--green); margin-right: 7px; }
+.avatar { width: 31px; min-height: 31px; padding: 0; border-radius: 50%; font-size: 12px; background: var(--accent-soft); color: var(--accent); }
+main { max-width: 1360px; margin: auto; padding: 35px 38px 20px; }
+.heading { display: flex; justify-content: space-between; align-items: center; margin-bottom: 28px; }
+.eyebrow { font-size: 9px; letter-spacing: 2px; color: var(--muted); margin-bottom: 9px; }
+h1 { font-size: 29px; font-weight: 650; letter-spacing: 1px; line-height: 1.3; margin: 0; }
+.title-dot { color: var(--accent); margin-left: 3px; }
+.heading p { font-size: 12px; color: var(--muted); margin: 10px 0 0; }
+.primary { background: var(--accent); color: var(--panel); font-size: 12px; padding: 11px 18px; }
+.primary:hover { background: var(--accent); filter: brightness(.95); }
+.primary svg { width: 17px; }
+.secondary { border: 1px solid var(--line); font-size: 12px; }
+.small { min-height: 34px; font-size: 11px; padding: 6px 10px; }
+.danger { color: var(--danger); }
+.category-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 13px; margin-bottom: 31px; }
+.category { display: flex; align-items: center; text-align: left; gap: 11px; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 17px 15px; min-height: 94px; }
+.category:hover, .category.active { border-color: var(--accent); background: var(--panel); }
+.category-icon { display: grid; place-items: center; border-radius: 10px; width: 39px; height: 39px; flex-shrink: 0; background: var(--image-bg); color: #9583d3; }
+.category.audio .category-icon { background: var(--audio-bg); color: #719982; }
+.category.document .category-icon { background: var(--doc-bg); color: #7996c5; }
+.category.other .category-icon { background: var(--other-bg); color: #c0a16d; }
+.category strong { font-size: 13px; font-weight: 600; }
+.category small { display: block; font-size: 9px; color: var(--muted); margin-top: 5px; white-space: nowrap; }
+.category-count { margin-left: auto; font-size: 21px; font-weight: 500; color: var(--ink); }
+.section-heading { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; gap: 8px; }
+.section-heading > div:first-child { display: flex; align-items: center; gap: 12px; min-width: 0; }
+h2 { font-size: 16px; line-height: 1.5; margin: 0; font-weight: 600; overflow-wrap: anywhere; }
+.muted { font-size: 11px; color: var(--muted); white-space: nowrap; }
+.section-actions { display: flex; align-items: center; }
+.toolbar { display: flex; justify-content: space-between; gap: 16px; margin-bottom: 12px; }
+.search { display: flex; align-items: center; gap: 9px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 0 12px; width: 340px; height: 40px; color: var(--muted); }
+.search svg { width: 16px; }
+.search input { width: 100%; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--ink); font-size: 12px; }
+.search input::placeholder { color: var(--muted); }
+kbd { white-space: nowrap; font-size: 10px; padding: 2px 5px; background: var(--bg); border: 1px solid var(--line); border-radius: 4px; color: var(--muted); }
+.filters { display: flex; gap: 10px; }
+select { border: 1px solid var(--line); border-radius: 8px; background: var(--panel); color: var(--muted); padding: 0 9px; font-size: 11px; min-height: 40px; max-width: 190px; }
+.view-switch { display: flex; background: var(--panel); border: 1px solid var(--line); padding: 3px; border-radius: 8px; }
+.view-switch button { min-height: 32px; height: 32px; width: 34px; min-width: 34px; padding: 7px; border-radius: 5px; }
+.view-switch svg { width: 16px; }
+.view-switch .active { background: var(--accent-soft); color: var(--accent); }
+.sticky-tools { position: sticky; top: 0; z-index: 3; display: flex; flex-wrap: wrap; gap: 7px; align-items: center; justify-content: space-between; padding: 9px 0; background: var(--bg); border-bottom: 1px solid var(--line); }
+.selection-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.select-page { display: flex; align-items: center; gap: 7px; min-height: 34px; font-size: 11px; color: var(--muted); padding-right: 4px; cursor: pointer; }
+.selection-tools .quiet { padding: 5px 7px; min-height: 34px; font-size: 11px; }
+.pager { display: flex; align-items: center; gap: 4px; color: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; }
+.pager button { min-width: 34px; min-height: 34px; padding: 4px; font-size: 21px; border: 1px solid var(--line); background: var(--panel); }
+.pager span { min-width: 37px; text-align: center; }
+.file-panel { border: 1px solid var(--line); background: var(--panel); border-radius: 10px; overflow: hidden; margin-top: 10px; }
+.table-head, .file-row { display: grid; grid-template-columns: 22px minmax(0, 1fr) 72px 84px 78px; align-items: center; gap: 12px; padding: 0 18px; }
+.table-head { height: 39px; background: var(--bg); font-size: 10px; color: var(--muted); }
+.table-head > span:last-child { text-align: right; padding-right: 9px; }
+.file-row { min-height: 70px; border-top: 1px solid var(--line); }
+.file-row:first-child { border-top: 0; }
+.file-row:hover { background: var(--hover); }
+.file-row.selected { background: var(--accent-soft); }
+.file-check { display: flex; align-items: center; justify-content: center; min-height: 44px; cursor: pointer; }
+.file-info { display: flex; gap: 12px; align-items: center; justify-content: flex-start; min-width: 0; padding: 8px 0; border-radius: 5px; text-align: left; }
+.file-info:hover { background: transparent; }
+.file-info[draggable=true] { cursor: grab; }
+.thumb { width: 39px; height: 39px; flex-shrink: 0; border-radius: 8px; background: var(--image-bg); color: #9384ca; display: grid; place-items: center; overflow: hidden; }
+.thumb.audio { background: var(--audio-bg); color: #7caa91; }
+.thumb.document { background: var(--doc-bg); color: #7996c5; }
+.thumb.other { background: var(--other-bg); color: #bfa677; }
+.thumb img { width: 100%; height: 100%; object-fit: cover; }
+.thumb svg { width: 19px; }
+.file-name { display: block; font-size: 13px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.file-path { display: block; font-size: 10px; color: var(--muted); margin-top: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.file-text { min-width: 0; }
+.badge { display: inline-block; font-size: 9px; line-height: 20px; padding: 0 7px; background: var(--bg); border: 1px solid var(--line); color: var(--muted); border-radius: 4px; text-transform: uppercase; }
+.file-size { font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.row-actions { display: flex; justify-content: flex-end; }
+.row-actions button { width: 36px; min-width: 36px; padding: 9px; }
+.row-actions svg { width: 16px; }
+.pagination { display: flex; align-items: center; justify-content: space-between; gap: 10px; border-top: 1px solid var(--line); padding: 10px 18px; font-size: 10px; color: var(--muted); }
+.bottom-note { display: flex; align-items: center; gap: 7px; margin: 13px 0 23px; color: var(--muted); font-size: 10px; }
+.bottom-note svg { width: 13px; height: 13px; }
+.bottom-right { margin-left: auto; white-space: nowrap; }
+.upload-hint { border: 1px dashed var(--line); border-radius: 10px; display: flex; align-items: center; gap: 15px; padding: 18px 23px; cursor: pointer; }
+.upload-hint:hover, .drop-target { outline: 2px dashed var(--accent); outline-offset: -2px; background: var(--accent-soft); }
+.upload-hint > span { color: var(--muted); }
+.upload-hint strong { font-size: 11px; font-weight: 500; display: block; }
+.upload-hint div > span { display: block; font-size: 10px; color: var(--muted); margin-top: 4px; }
+.text-link { color: var(--accent); }
+footer { display: flex; align-items: center; justify-content: space-between; font-size: 10px; color: var(--muted); margin-top: 18px; }
+footer .quiet { font-size: 10px; }
+.notice { padding: 12px 15px; border: 1px solid #d9c9a9; background: var(--other-bg); color: #967536; border-radius: 8px; margin: 12px 0; font-size: 12px; }
+.empty { padding: 48px 20px; text-align: center; color: var(--muted); font-size: 12px; grid-column: 1 / -1; }
+.empty svg { width: 32px; height: 32px; margin-bottom: 12px; }
+.empty strong { display: block; font-size: 15px; color: var(--ink); margin-bottom: 8px; }
+.file-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; padding: 16px; }
+.file-grid .file-row { display: grid; grid-template-columns: 22px 1fr; align-items: center; padding: 11px; border: 1px solid var(--line); border-radius: 9px; gap: 8px; }
+.file-grid .file-info { flex-direction: column; align-items: stretch; grid-column: 1 / -1; grid-row: 2; padding: 0; }
+.file-grid .thumb { width: 100%; height: 80px; }
+.file-grid .file-text { width: 100%; }
+.file-grid .file-type { grid-column: 2; grid-row: 1; text-align: right; }
+.file-grid .file-size { grid-column: 1 / -1; }
+.file-grid .row-actions { grid-column: 1 / -1; }
+.context-menu { position: fixed; z-index: 8; width: 232px; max-width: calc(100vw - 16px); max-height: calc(100dvh - 16px); overflow-y: auto; padding: 6px; background: var(--panel); border: 1px solid var(--line); border-radius: 11px; box-shadow: var(--shadow); }
+.context-menu button { display: flex; width: 100%; justify-content: flex-start; min-height: 42px; font-size: 12px; text-align: left; padding: 8px 10px; }
+.context-menu svg { width: 16px; height: 16px; }
+dialog { width: min(500px, calc(100% - 28px)); border: 1px solid var(--line); border-radius: 16px; background: var(--panel); color: var(--ink); padding: 23px; box-shadow: var(--shadow); max-height: 88dvh; overflow: auto; }
+dialog::backdrop { background: #151b304b; }
+.dialog-header { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 18px; }
+.dialog-header h2 { font-size: 17px; }
+.field { display: block; font-size: 12px; margin-bottom: 16px; }
+.field > span { display: block; margin-bottom: 7px; }
+.field input, .field select { width: 100%; padding: 10px 12px; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; color: var(--ink); min-height: 43px; max-width: 100%; }
+.field .token-field { display: flex; gap: 6px; }
+.token-field input { min-width: 0; }
+.help, .help-list { font-size: 12px; color: var(--muted); line-height: 1.9; }
+.dialog-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 22px; }
+.wrap { flex-wrap: wrap; }
+.settings-line { display: flex; align-items: center; gap: 9px; font-size: 12px; margin: 15px 0; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 23px 0; }
+.preview-media { background: var(--bg); border-radius: 10px; padding: 12px; text-align: center; margin-bottom: 17px; }
+.preview-media img { max-width: 100%; max-height: 34dvh; object-fit: contain; }
+.preview-media audio { width: 100%; }
+.audio-art { display: block; margin: 16px; color: var(--green); }
+.audio-art svg { width: 42px; height: 42px; }
+.text-preview { text-align: left; white-space: pre-wrap; overflow-wrap: anywhere; max-height: 40dvh; overflow-y: auto; margin: 0; font: 13px/1.7 ui-monospace, monospace; user-select: text; }
+.detail-path { font-size: 11px; color: var(--muted); overflow-wrap: anywhere; }
+.action-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; margin-top: 18px; }
+.action-grid button { border: 1px solid var(--line); font-size: 11px; flex-direction: column; padding: 12px 5px; }
+.action-grid svg { width: 18px; }
+.membership-option { display: flex; gap: 10px; align-items: center; padding: 13px 0; border-bottom: 1px solid var(--line); cursor: pointer; }
+.membership-option > span { min-width: 0; overflow-wrap: anywhere; }
+.membership-option small { margin-left: auto; color: var(--muted); font-size: 10px; white-space: nowrap; }
+.upload-item { margin: 12px 0; font-size: 11px; }
+.upload-item strong { font-weight: 500; display: block; overflow-wrap: anywhere; }
+.upload-item progress { width: 100%; height: 6px; accent-color: var(--accent); }
+.upload-status { color: var(--muted); }
+.error { color: var(--danger); }
+#toasts { position: fixed; bottom: max(20px, env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%); z-index: 10; max-width: calc(100% - 30px); width: max-content; }
+.toast { display: flex; align-items: center; gap: 8px; background: var(--ink); color: var(--panel); border-radius: 9px; padding: 11px 16px; margin-top: 8px; box-shadow: var(--shadow); font-size: 12px; }
+.toast button { color: inherit; text-decoration: underline; padding: 2px 8px; min-height: 30px; }
+body[data-theme=dark] { color-scheme: dark; --bg: #181a20; --panel: #20232b; --ink: #e3e5ed; --muted: #a0a7b8; --line: #30343e; --accent: #a092ee; --accent-soft: #322e48; --hover: #292c36; --shadow: 0 14px 48px #0005; --image-bg: #393249; --audio-bg: #2a3e36; --doc-bg: #29364b; --other-bg: #42392c; --danger: #e08e94; }
+@media (prefers-color-scheme: dark) {
+  body[data-theme=system] { color-scheme: dark; --bg: #181a20; --panel: #20232b; --ink: #e3e5ed; --muted: #a0a7b8; --line: #30343e; --accent: #a092ee; --accent-soft: #322e48; --hover: #292c36; --shadow: 0 14px 48px #0005; --image-bg: #393249; --audio-bg: #2a3e36; --doc-bg: #29364b; --other-bg: #42392c; --danger: #e08e94; }
+}
+@media (max-width: 1150px) {
+  .sidebar { width: 204px; padding-left: 13px; padding-right: 13px; }
+  .workspace { margin-left: 204px; }
+  main { padding: 30px 25px 20px; }
+  .topbar { padding: 0 25px; }
+  .category { display: block; position: relative; padding: 14px; }
+  .category-icon { width: 32px; height: 32px; margin-bottom: 9px; }
+  .category-count { position: absolute; top: 15px; right: 14px; }
+  .category small { font-size: 8px; }
+  .table-head, .file-row { grid-template-columns: 20px minmax(0, 1fr) 60px 68px 70px; gap: 8px; padding: 0 13px; }
+  .file-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 760px) {
+  .sidebar { position: static; width: auto; padding: 16px 18px 9px; border-right: 0; border-bottom: 1px solid var(--line); display: block; overflow: visible; }
+  .brand { font-size: 20px; margin: 0 0 15px; gap: 9px; }
+  .brand-mark { width: 34px; height: 34px; border-radius: 10px; }
+  .brand-en { font-size: 7px; }
+  .sidebar > .nav-caption, .collection-tip, .sidebar-bottom { display: none; }
+  #navigation { display: flex; gap: 5px; overflow-x: auto; padding-bottom: 3px; }
+  #navigation .nav-item { width: auto; white-space: nowrap; min-height: 39px; padding: 6px 10px; font-size: 11px; gap: 6px; margin: 0; }
+  #navigation .nav-count { font-size: 10px; }
+  #navigation .nav-item svg { width: 15px; }
+  .collection-heading { margin: 4px 0 0; justify-content: flex-start; gap: 2px; }
+  .collection-heading .nav-caption { font-size: 10px; margin-left: 8px; }
+  .collection-heading .icon-button { width: 32px; min-width: 32px; min-height: 32px; height: 32px; padding: 7px; }
+  #collections { display: flex; gap: 7px; overflow-x: auto; padding-bottom: 3px; }
+  .collection-row { flex-shrink: 0; max-width: 190px; border: 1px solid var(--line); border-radius: 8px; }
+  .collection-row .nav-item { width: auto; white-space: nowrap; font-size: 11px; min-height: 36px; padding: 3px 4px 3px 9px; margin: 0; }
+  .collection-row .nav-item svg { width: 14px; }
+  .collection-more { min-height: 36px; }
+  .workspace { margin: 0; }
+  .topbar { height: 0; padding: 0; border: 0; }
+  .crumb { display: none; }
+  .top-actions { position: absolute; right: 16px; top: 17px; gap: 6px; }
+  .connection { font-size: 9px; }
+  .top-actions .icon-button { width: 33px; min-width: 33px; min-height: 33px; }
+  .avatar { width: 29px; min-height: 29px; }
+  main { padding: 24px 15px 20px; }
+  .heading { margin-bottom: 22px; }
+  .eyebrow { font-size: 7px; letter-spacing: 1.2px; }
+  h1 { font-size: 24px; }
+  .heading p { font-size: 11px; }
+  .heading .primary { font-size: 11px; padding: 9px 12px; }
+  .category-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 7px; margin-bottom: 23px; }
+  .category { padding: 12px 9px 10px; min-height: 86px; border-radius: 10px; }
+  .category-icon { width: 28px; height: 28px; border-radius: 8px; margin-bottom: 7px; }
+  .category-icon svg { width: 16px; }
+  .category strong { font-size: 12px; }
+  .category small { display: none; }
+  .category-count { right: 9px; top: 13px; font-size: 17px; }
+  .section-heading { margin-bottom: 12px; }
+  .section-heading > div:first-child { gap: 7px; }
+  h2 { font-size: 15px; }
+  .muted { font-size: 10px; }
+  .quiet { font-size: 10px; padding: 7px; }
+  .quiet svg { width: 16px; }
+  .toolbar { gap: 8px; flex-wrap: wrap; margin-bottom: 3px; }
+  .search { width: auto; flex: 1; min-width: 145px; }
+  .search input { font-size: 16px; }
+  .search input::placeholder { font-size: 11px; }
+  .search kbd { display: none; }
+  .filters { gap: 7px; }
+  select { max-width: 137px; font-size: 11px; padding: 0 7px; }
+  .view-switch { display: none; }
+  .sticky-tools { padding: 8px 0; gap: 8px; top: 0; }
+  .selection-tools { width: 100%; gap: 5px; }
+  .selection-tools .quiet { font-size: 10px; }
+  .selection-tools .small { min-height: 35px; padding: 6px 9px; font-size: 10px; }
+  #batchCollection { margin-left: auto; }
+  #topPagination { width: 100%; justify-content: flex-end; }
+  #topPagination::before { content: '左右滑动也可翻页'; margin-right: auto; font-size: 10px; color: var(--muted); }
+  .pager button { min-height: 36px; min-width: 40px; }
+  .table-head, .file-row { grid-template-columns: 22px minmax(0, 1fr) 55px 36px; padding: 0 9px; gap: 7px; }
+  .table-head { font-size: 9px; height: 35px; }
+  .table-head > span:nth-child(3), .file-type { display: none; }
+  .file-row { min-height: 70px; }
+  .file-info { gap: 9px; }
+  .thumb { width: 34px; height: 34px; }
+  .file-name { font-size: 12px; }
+  .file-path { font-size: 9px; }
+  .file-size { font-size: 10px; }
+  .row-actions button { min-width: 36px; width: 36px; min-height: 44px; }
+  .copy-action { display: none; }
+  .pagination { padding: 9px 12px; font-size: 10px; }
+  .bottom-note { font-size: 10px; align-items: flex-start; margin-bottom: 20px; }
+  .bottom-right { display: none; }
+  .upload-hint { padding: 15px 12px; gap: 10px; }
+  .upload-hint strong { font-size: 11px; }
+  .upload-hint div > span { font-size: 9px; }
+  footer { font-size: 9px; gap: 8px; }
+  .file-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 9px; gap: 8px; }
+  .file-grid .file-info { gap: 8px; }
+  dialog { padding: 19px; }
+  .field input { font-size: 16px; }
+  .action-grid button { min-height: 67px; }
+  .notice { font-size: 11px; }
+  .dialog-actions { flex-wrap: wrap; }
+}
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+
+</style>
+</head>
+<body>
+  <aside class="sidebar">
+    <a class="brand" href="#all"><span class="brand-mark" data-icon="layers"></span><span>轻集<span class="brand-en">FILE LIBRARY</span></span></a>
+    <div class="nav-caption">我的空间</div>
+    <nav id="navigation" aria-label="文件导航"></nav>
+    <div class="collection-heading"><span class="nav-caption">收藏夹</span><button class="icon-button" id="addCollection" aria-label="新建收藏夹" data-icon="plus"></button></div>
+    <nav id="collections" aria-label="收藏夹"></nav>
+    <div class="collection-tip">一个文件，可以有多个归属。<br>桌面可拖到收藏夹，手机可多选。</div>
+    <div class="sidebar-bottom">
+      <div class="repository"><span data-icon="github"></span><div><strong>mp3</strong><small>iry31569716 / main</small></div><span class="status-dot"></span></div>
+      <button id="settingsSide" class="quiet full"><span data-icon="settings"></span>连接与设置</button>
+    </div>
+  </aside>
+  <div class="workspace">
+    <header class="topbar">
+      <div class="crumb"><span data-icon="home"></span><span>我的空间</span><span>/</span><strong id="crumb">全部文件</strong></div>
+      <div class="top-actions"><span id="connection" class="connection">只读浏览</span><button id="theme" class="icon-button" aria-label="切换外观" data-icon="moon"></button><button id="settingsTop" class="avatar" aria-label="连接与设置">D</button></div>
+    </header>
+    <main>
+      <div class="heading"><div><div class="eyebrow">A LITTLE SPACE, WELL ORGANIZED</div><h1>我的文件库<span class="title-dot">.</span></h1><p>把喜欢的，都好好收起来。</p></div><button class="primary" id="upload"><span data-icon="plus"></span>上传文件</button></div>
+      <section class="category-grid" id="categories" aria-label="自动分类"></section>
+      <div class="section-heading"><div><h2 id="sectionTitle">全部文件</h2><span id="fileCount" class="muted">正在读取…</span></div><div class="section-actions"><button class="quiet" id="collectionActions" hidden><span data-icon="more"></span>管理收藏夹</button><button class="quiet" id="refresh"><span data-icon="refresh"></span>刷新</button></div></div>
+      <div class="toolbar">
+        <label class="search"><span data-icon="search"></span><input id="search" type="search" placeholder="搜索文件名或路径…" aria-label="搜索文件"><kbd>⌘ K</kbd></label>
+        <div class="filters"><select id="sort" aria-label="排序"><option value="name">名称 A → Z</option><option value="size">大小：从大到小</option><option value="type">文件类型</option><option value="uploaded-newest">上传时间：新到旧（本机）</option><option value="uploaded-oldest">上传时间：旧到新（本机）</option></select><div class="view-switch"><button class="icon-button active" id="listView" aria-label="列表视图" data-icon="list"></button><button class="icon-button" id="gridView" aria-label="网格视图" data-icon="grid"></button></div></div>
+      </div>
+      <p id="dateHint" class="help" hidden>上传时间只记录此浏览器在本网站完成的上传；旧文件无记录时排在最后，记录可随分类备份导出。</p>
+      <div id="notice" class="notice" hidden></div>
+      <div class="sticky-tools" id="stickyTools">
+        <div class="selection-tools"><label class="select-page"><input id="selectPage" type="checkbox" aria-label="选择本页文件"><span>本页</span></label><span id="selectionCount" class="muted">未选择</span><button class="quiet" id="selectAll">全选</button><button class="quiet" id="clearSelection" hidden>取消选择</button><button class="primary small" id="batchCollection" disabled>加入收藏夹</button><button class="secondary small" id="batchRemove" hidden>移出此收藏夹</button></div>
+        <div id="topPagination" class="pager" aria-label="顶部翻页"></div>
+      </div>
+      <section class="file-panel" aria-label="文件列表">
+        <div class="table-head"><span></span><span>文件名称</span><span>类型</span><span>文件大小</span><span>操作</span></div>
+        <div id="files"></div>
+        <div class="pagination"><span id="pageSummary"></span><div id="pagination" class="pager" aria-label="底部翻页"></div></div>
+      </section>
+      <div class="bottom-note"><span data-icon="shield"></span><span id="viewHint">自动分类仅整理视图，不改变文件的 GitHub 地址。</span><span class="bottom-right" id="syncStatus">等待同步</span></div>
+      <div class="upload-hint" id="dropZone" role="button" tabindex="0" aria-label="选择文件上传"><span data-icon="upload"></span><div><strong>给你的收藏，添一点新内容</strong><span>拖放文件到这里，或<span class="text-link">点击上传</span> · 图片、音频、文档自动归类</span></div></div>
+      <footer><span>轻集 · 让文件各得其所</span><button class="quiet" id="shortcutHelp">快捷键与小提示</button></footer>
+    </main>
+  </div>
+  <input type="file" id="fileInput" multiple hidden accept="image/*,audio/*,.txt,.md,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.csv,.json,.rtf,.log,.epub,.zip,.7z">
+  <div id="toasts" aria-live="polite"></div>
+  <div id="contextMenu" class="context-menu" role="menu" aria-label="文件操作" hidden></div>
+  <dialog id="modal"><div class="dialog-header"><h2 id="modalTitle"></h2><button type="button" class="icon-button" id="closeModal" aria-label="关闭" data-icon="close"></button></div><div id="modalBody"></div></dialog>
+  <script>
+const ICON_PATHS = {layers:'M12 3 3 8l9 5 9-5-9-5ZM3 12l9 5 9-5M3 16l9 5 9-5',home:'m3 10 9-7 9 7v10H5V10m4 10v-7h6v7',image:'M4 4h16v16H4ZM4 16l5-5 4 4 3-3 4 4M15 8h.01',audio:'M9 18V5l11-2v13M9 8l11-2M9 18c0 1.7-1.5 3-3.5 3S2 19.7 2 18s1.5-3 3.5-3S9 16.3 9 18ZM20 16c0 1.7-1.5 3-3.5 3S13 17.7 13 16s1.5-3 3.5-3S20 14.3 20 16Z',file:'M6 3h8l4 4v14H6ZM14 3v5h4M9 12h6M9 16h6',folder:'M3 6h7l2 3h9v11H3V6Z',grid:'M3 3h7v7H3ZM14 3h7v7h-7ZM3 14h7v7H3ZM14 14h7v7h-7Z',list:'M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01',heart:'M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z',plus:'M12 5v14M5 12h14',settings:'M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8ZM10 3h4l1 3 3 1 3 3v4l-3 1-1 3-3 3h-4l-1-3-3-1-3-3v-4l3-1 1-3Z',chevron:'m9 6 6 6-6 6',arrow:'M5 12h14m-5-5 5 5-5 5',refresh:'M20 7v5h-5M4 17v-5h5M5 8a8 8 0 0 1 13-3l2 3M4 16l2 3a8 8 0 0 0 13-3',search:'M10 3a7 7 0 1 0 0 14 7 7 0 0 0 0-14Zm5 12 6 6',moon:'M20 14A8 8 0 0 1 10 4a8 8 0 1 0 10 10Z',sun:'M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8ZM12 2v2M12 20v2M2 12h2M20 12h2M5 5l1 1M18 18l1 1M5 19l1-1M18 6l1-1',monitor:'M3 4h18v13H3ZM8 21h8M12 17v4',github:'M9 19c-4 1-4-2-6-2M15 22v-4c0-1-.2-2-1-2 4 0 6-2 6-6 0-2-1-3-1-3s1-3 0-4c-2 0-4 2-4 2a12 12 0 0 0-6 0S7 3 5 3c-1 1 0 4 0 4s-1 1-1 3c0 4 2 6 6 6-1 1-1 2-1 3v3',link:'M10 13a5 5 0 0 0 7 0l4-4a5 5 0 0 0-7-7l-3 3M14 11a5 5 0 0 0-7 0l-4 4a5 5 0 0 0 7 7l3-3',external:'M14 3h7v7m0-7L10 14M10 3H3v18h18v-7',more:'M5 12h.01M12 12h.01M19 12h.01',upload:'M12 16V3m-5 5 5-5 5 5M4 15v6h16v-6',shield:'m12 3 8 3v6c0 5-8 9-8 9s-8-4-8-9V6l8-3Zm-4 9 3 3 5-6',close:'m6 6 12 12M6 18 18 6',edit:'m15 4 5 5M4 16 16 4a3 3 0 0 1 4 4L8 20H4v-4Z',trash:'M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7M14 10v7',check:'m5 12 4 4L19 6'};
+
+</script>
+  <script>
+/* Pure file and collection operations. No DOM or network dependencies. */
+const LibraryCore = (() => {
+  const CONFIG = Object.freeze({owner: 'iry31569716', repo: 'mp3', branch: 'main', pages: 'https://iry31569716.github.io/mp3/'});
+  const TYPES = Object.freeze({
+    image: {label: '图片', description: '照片、截图与插画', icon: 'image'},
+    audio: {label: '音频', description: '音乐、声音与录音', icon: 'audio'},
+    document: {label: '文档', description: 'TXT、PDF 与办公文件', icon: 'file'},
+    other: {label: '其他', description: '压缩包与其他文件', icon: 'folder'}
+  });
+  const extensions = {
+    image: ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp', 'ico', 'avif', 'heic'],
+    audio: ['mp3', 'wav', 'm4a', 'ogg', 'flac', 'aac', 'opus', 'aiff'],
+    document: ['txt', 'md', 'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'csv', 'json', 'rtf', 'log', 'epub']
+  };
+  const textExtensions = ['txt', 'md', 'csv', 'json', 'log'];
+  const extension = path => (path.split('/').pop().match(/\.([^.]+)$/)?.[1] || '').toLowerCase();
+  const kind = path => Object.keys(extensions).find(type => extensions[type].includes(extension(path))) || 'other';
+  const encodePath = path => path.split('/').map(encodeURIComponent).join('/');
+  const pagesURL = path => CONFIG.pages + encodePath(path);
+  const rawURL = path => `https://raw.githubusercontent.com/${CONFIG.owner}/${CONFIG.repo}/${CONFIG.branch}/${encodePath(path)}`;
+  const uploadPath = name => ({image: '图', audio: 'mp3', document: '文档', other: 'files'}[kind(name)]) + '/' + name;
+  const allowedUpload = name => kind(name) !== 'other' || ['zip', '7z'].includes(extension(name));
+  const validName = name => !!name && name !== '.' && name !== '..' && !/[\/\\\u0000-\u001f]/.test(name) && !name.startsWith('.');
+  const isText = name => textExtensions.includes(extension(name));
+  const systemFiles = ['README.md', 'index.html', 'styles.css', 'app.js', 'core.js', 'github.js', 'icons.js', 'LICENSE', 'CNAME'];
+  const visibleFile = file => file.type === 'blob' && !file.path.split('/').some(p => p.startsWith('.')) && !systemFiles.includes(file.path);
+  const bytes = size => size >= 1048576 ? (size / 1048576).toFixed(1) + ' MB' : size >= 1024 ? Math.round(size / 1024) + ' KB' : size + ' B';
+  const nameOf = path => path.split('/').pop();
+  function preserveExtension(oldName, input) {
+    const suffix = oldName.match(/\.[^.]+$/)?.[0] || '';
+    return suffix && !input.toLowerCase().endsWith(suffix.toLowerCase()) ? input + suffix : input;
+  }
+  function normalizeMeta(value = {}) {
+    const uniquePaths = list => [...new Set(Array.isArray(list) ? list.filter(p => typeof p === 'string') : [])];
+    const ids = new Set();
+    const collections = (Array.isArray(value.collections) ? value.collections : []).filter(c => {
+      if (!c || typeof c.id !== 'string' || ids.has(c.id) || typeof c.name !== 'string' || !c.name.trim()) return false;
+      ids.add(c.id);
+      return true;
+    }).map(c => ({id: c.id, name: c.name.trim().slice(0, 30), paths: uniquePaths(c.paths)}));
+    const uploadedAt = Object.fromEntries(Object.entries(value.uploadedAt || {}).filter(([path, time]) => typeof path === 'string' && Number.isFinite(time) && time > 0));
+    return {collections, favorites: uniquePaths(value.favorites), uploadedAt};
+  }
+  function updateMembership(meta, paths, changes) {
+    const target = new Set(paths);
+    return {...meta, collections: meta.collections.map(collection => {
+      if (!Object.hasOwn(changes, collection.id)) return collection;
+      const members = new Set(collection.paths);
+      for (const path of target) changes[collection.id] ? members.add(path) : members.delete(path);
+      return {...collection, paths: [...members]};
+    })};
+  }
+  function membershipState(collection, paths) {
+    const count = paths.filter(path => collection.paths.includes(path)).length;
+    return count === 0 ? 'none' : count === paths.length ? 'all' : 'mixed';
+  }
+  function migratePath(meta, oldPath, newPath) {
+    const replace = paths => [...new Set(paths.flatMap(p => p === oldPath ? newPath ? [newPath] : [] : [p]))];
+    const uploadedAt = {...meta.uploadedAt};
+    if (Object.hasOwn(uploadedAt, oldPath)) {
+      if (newPath) uploadedAt[newPath] = uploadedAt[oldPath];
+      delete uploadedAt[oldPath];
+    }
+    return {...meta, favorites: replace(meta.favorites), collections: meta.collections.map(c => ({...c, paths: replace(c.paths)})), uploadedAt};
+  }
+  function filteredFiles(files, meta, active, query, sort) {
+    const collection = meta.collections.find(c => 'c:' + c.id === active);
+    const q = query.trim().toLocaleLowerCase();
+    const list = files.filter(file => (active === 'all' || active === 'favorites' && meta.favorites.includes(file.path) || TYPES[active] && kind(file.path) === active || collection?.paths.includes(file.path)) && file.path.toLocaleLowerCase().includes(q));
+    const byName = (a, b) => nameOf(a.path).localeCompare(nameOf(b.path), 'zh-CN', {numeric: true}) || a.path.localeCompare(b.path);
+    return list.sort((a, b) => {
+      if (sort === 'size') return (b.size || 0) - (a.size || 0) || byName(a, b);
+      if (sort === 'type') return extension(a.path).localeCompare(extension(b.path)) || byName(a, b);
+      if (sort.startsWith('uploaded')) {
+        const at = meta.uploadedAt[a.path], bt = meta.uploadedAt[b.path];
+        if (!at || !bt) return at ? -1 : bt ? 1 : byName(a, b);
+        return (sort === 'uploaded-oldest' ? at - bt : bt - at) || byName(a, b);
+      }
+      return byName(a, b);
+    });
+  }
+  function moveChanges(entries, oldPath, newPath, expectedSHA) {
+    const source = entries.find(e => e.path === oldPath && e.type === 'blob');
+    if (!source) throw Error('原文件已不存在，请刷新后重试。');
+    if (source.sha !== expectedSHA) throw Error('文件已在其他位置修改，请刷新后重试。');
+    if (entries.some(e => e.path === newPath || e.path.startsWith(newPath + '/'))) throw Error('目标名称已存在，未覆盖任何文件。');
+    const folders = newPath.split('/').slice(0, -1);
+    if (folders.some((_, i) => entries.some(e => e.type === 'blob' && e.path === folders.slice(0, i + 1).join('/')))) throw Error('目标目录与现有文件冲突。');
+    return [{path: newPath, mode: source.mode, type: 'blob', sha: source.sha}, {path: oldPath, mode: source.mode, type: 'blob', sha: null}];
+  }
+  return {CONFIG, TYPES, extension, kind, encodePath, pagesURL, rawURL, uploadPath, allowedUpload, validName, isText, visibleFile, bytes, nameOf, preserveExtension, normalizeMeta, updateMembership, membershipState, migratePath, filteredFiles, moveChanges};
+})();
+
+</script>
+  <script>
+/* GitHub transport and serialized writes. UI and local collections stay elsewhere. */
+class GitHubRepository {
+  constructor(config, getToken) {
+    this.config = config;
+    this.getToken = getToken;
+    this.base = `https://api.github.com/repos/${config.owner}/${config.repo}`;
+    this.writing = false;
+  }
+  async request(path, options = {}) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 30000);
+    try {
+      const token = this.getToken();
+      const response = await fetch(this.base + path, {
+        cache: 'no-store', ...options, signal: controller.signal,
+        headers: {Accept: 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28', ...(token ? {Authorization: `Bearer ${token}`} : {}), ...(options.body ? {'Content-Type': 'application/json'} : {}), ...options.headers}
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        const messages = {
+          401: 'Token 无效或已过期，请在设置中更换。',
+          403: 'GitHub 拒绝访问，请检查仓库授权、Contents 权限或请求额度。',
+          404: '未找到文件或仓库，请检查分支和 Token 授权。',
+          409: '仓库已被其他操作更新，请刷新后重试。',
+          422: '名称或提交存在冲突，请刷新后检查目标路径。'
+        };
+        const error = Error(messages[response.status] || `GitHub 请求失败（${response.status}）。`);
+        error.status = response.status;
+        throw error;
+      }
+      return data;
+    } catch (error) {
+      if (error.status) throw error;
+      if (error.name === 'AbortError') throw Error('连接超时，请检查网络后重试。');
+      throw Error('无法连接 GitHub，请检查网络或浏览器限制。');
+    } finally { clearTimeout(timeout); }
+  }
+  async list(tree = LibraryCore.encodePath(this.config.branch)) {
+    const result = await this.request(`/git/trees/${tree}?recursive=1`);
+    if (result.truncated) throw Error('GitHub 未返回完整目录，为避免遗漏，本次停止操作。');
+    return result.tree;
+  }
+  async snapshot() {
+    const ref = await this.request('/git/ref/heads/' + LibraryCore.encodePath(this.config.branch));
+    const commit = await this.request('/git/commits/' + ref.object.sha);
+    return {head: ref.object.sha, treeSHA: commit.tree.sha, entries: await this.list(commit.tree.sha)};
+  }
+  async exclusive(action) {
+    if (this.writing) throw Error('已有文件操作正在进行，请稍后再试。');
+    if (!this.getToken()) throw Error('请先连接 GitHub Token。');
+    this.writing = true;
+    try { return await action(); } finally { this.writing = false; }
+  }
+  async mutate(message, makeChanges) {
+    return this.exclusive(async () => {
+      const snapshot = await this.snapshot();
+      const changes = makeChanges(snapshot.entries);
+      if (!changes.length) throw Error('没有需要提交的更改。');
+      const tree = await this.request('/git/trees', {method: 'POST', body: JSON.stringify({base_tree: snapshot.treeSHA, tree: changes})});
+      const commit = await this.request('/git/commits', {method: 'POST', body: JSON.stringify({message, tree: tree.sha, parents: [snapshot.head]})});
+      try {
+        await this.request('/git/refs/heads/' + LibraryCore.encodePath(this.config.branch), {method: 'PATCH', body: JSON.stringify({sha: commit.sha, force: false})});
+      } catch (error) {
+        if (!error.status) error.message += ' 提交结果尚未确认，请刷新核对后再操作。';
+        throw error;
+      }
+      // The accepted commit gives a complete local result even if a follow-up read fails.
+      const entries = snapshot.entries.filter(e => !changes.some(c => c.path === e.path));
+      for (const change of changes) if (change.sha !== null) entries.push({...change, size: snapshot.entries.find(e => e.sha === change.sha)?.size || 0});
+      return entries;
+    });
+  }
+  async existing(path) {
+    try { return await this.request('/contents/' + LibraryCore.encodePath(path) + '?ref=' + encodeURIComponent(this.config.branch)); }
+    catch (error) { if (error.status === 404) return null; throw error; }
+  }
+  async upload(path, file, sha, onProgress) {
+    return this.exclusive(async () => {
+      const content = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result).split(',')[1]);
+        reader.onerror = () => reject(Error('文件读取失败。'));
+        reader.readAsDataURL(file);
+      });
+      return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open('PUT', this.base + '/contents/' + LibraryCore.encodePath(path));
+        xhr.timeout = 180000;
+        for (const [key, value] of Object.entries({'Accept': 'application/vnd.github+json', 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + this.getToken(), 'X-GitHub-Api-Version': '2022-11-28'})) xhr.setRequestHeader(key, value);
+        xhr.upload.onprogress = event => { if (event.lengthComputable) onProgress(Math.min(95, Math.round(event.loaded / event.total * 95))); };
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            try { resolve(JSON.parse(xhr.responseText)); } catch { reject(Error('提交响应无法解析，请刷新核对结果。')); }
+          } else reject(Error(({401: 'Token 无效或已过期。', 403: '权限不足或请求受限。', 409: '文件已更新，请刷新后重试。', 422: '路径或内容存在冲突。'})[xhr.status] || `上传失败（HTTP ${xhr.status}）。`));
+        };
+        xhr.onerror = xhr.ontimeout = () => reject(Error('网络中断或超时，提交结果尚未确认，请刷新核对。'));
+        xhr.send(JSON.stringify({message: 'Upload ' + path, content, branch: this.config.branch, ...(sha ? {sha} : {})}));
+      });
+    });
+  }
+}
+
+</script>
+  <script>
+/* View state, rendering and user interactions. No GitHub tree mutation logic here. */
+(() => {
+  'use strict';
+  const C = LibraryCore;
+  const $ = id => document.getElementById(id);
+  const escape = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[char]));
+  const icon = name => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${ICON_PATHS[name] || ICON_PATHS.file}"/></svg>`;
+  const META_KEY = 'qingji:iry31569716/mp3:v1'; // Preserve existing users' collections.
+  const TOKEN_KEY = 'qingji:token';
+  const CACHE_KEY = 'qingji:file-cache:v1';
+  const PAGE_SIZE = 10;
+  const read = (key, fallback) => { try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch { return fallback; } };
+  const state = {
+    files: [], meta: C.normalizeMeta(read(META_KEY, {})), active: 'all', page: 1,
+    selected: new Set(), anchor: null, view: read('qingji:view', 'list'), theme: read('qingji:theme', 'system'),
+    token: read(TOKEN_KEY, ''), busy: false, loading: false, loaded: false, error: '', generation: 0
+  };
+  if (typeof state.token !== 'string') state.token = '';
+  const cached = read(CACHE_KEY, null);
+  if (cached && Array.isArray(cached.files) && Number.isFinite(cached.time)) {
+    state.files = cached.files.filter(f => typeof f.path === 'string' && typeof f.sha === 'string' && C.visibleFile(f));
+    state.loaded = true;
+    $('syncStatus').textContent = '上次同步 · ' + new Date(cached.time).toLocaleDateString('zh-CN');
+  }
+  const repo = new GitHubRepository(C.CONFIG, () => state.token);
+  let modalCleanup = () => {};
+  let modalSerial = 0;
+  let menuActions = [];
+  let menuAnchor = null;
+  let dragPaths = [];
+  let swipeStart = null;
+  let searchTimer;
+
+  function toast(message, undo) {
+    const item = document.createElement('div');
+    item.className = 'toast';
+    const text = document.createElement('span');
+    text.textContent = message;
+    item.append(text);
+    if (undo) {
+      const button = document.createElement('button');
+      button.textContent = '撤销';
+      button.onclick = () => { undo(); item.remove(); };
+      item.append(button);
+    }
+    $('toasts').append(item);
+    setTimeout(() => item.remove(), undo ? 9000 : 6000);
+  }
+  function persist(key, value) {
+    try { localStorage.setItem(key, JSON.stringify(value)); return true; }
+    catch { toast('浏览器无法保存数据，请检查存储权限或空间。'); return false; }
+  }
+  function saveMeta(next) {
+    if (!persist(META_KEY, next)) return false;
+    state.meta = next;
+    render();
+    return true;
+  }
+  function afterRepositoryChange(oldPath, newPath) {
+    const next = C.migratePath(state.meta, oldPath, newPath);
+    if (!saveMeta(next)) { state.meta = next; render(); toast('文件操作已成功；本地收藏关系未能持久保存，请导出备份。'); }
+  }
+  const currentCollection = () => state.meta.collections.find(c => 'c:' + c.id === state.active);
+  const protectedView = () => state.active.startsWith('c:') || state.active === 'favorites';
+  const filtered = () => C.filteredFiles(state.files, state.meta, state.active, $('search').value, $('sort').value);
+  const pageFiles = () => filtered().slice((state.page - 1) * PAGE_SIZE, state.page * PAGE_SIZE);
+  const knownPaths = paths => [...new Set(paths)].filter(path => state.files.some(f => f.path === path));
+  function notice(message) { $('notice').textContent = message; $('notice').hidden = !message; }
+  function setBusy(value) { state.busy = value; $('upload').disabled = value; $('refresh').disabled = value || state.loading; }
+  function applyTheme() {
+    document.body.dataset.theme = state.theme;
+    const label = {system: '跟随系统', light: '浅色', dark: '深色'}[state.theme] || '跟随系统';
+    $('theme').innerHTML = icon(state.theme === 'dark' ? 'sun' : state.theme === 'light' ? 'moon' : 'monitor');
+    $('theme').setAttribute('aria-label', '外观：' + label + '（点击切换）');
+    $('theme').title = $('theme').getAttribute('aria-label');
+  }
+  async function loadFiles() {
+    if (state.loading || state.busy) return;
+    state.loading = true;
+    const generation = ++state.generation;
+    $('refresh').disabled = true;
+    $('syncStatus').textContent = '同步中…';
+    render();
+    try {
+      const entries = await repo.list();
+      if (generation !== state.generation) return;
+      state.files = entries.filter(C.visibleFile);
+      try { localStorage.setItem(CACHE_KEY, JSON.stringify({files: state.files, time: Date.now()})); } catch {}
+      state.loaded = true;
+      state.error = '';
+      state.selected = new Set(knownPaths([...state.selected]));
+      $('syncStatus').textContent = '刚刚同步 · GitHub';
+      notice('');
+    } catch (error) {
+      if (generation !== state.generation) return;
+      state.error = error.message;
+      notice(error.message + (state.loaded ? ' 正在显示上次读取的列表。' : ''));
+      $('syncStatus').textContent = '同步未完成';
+    } finally {
+      state.loading = false;
+      $('refresh').disabled = state.busy;
+      render();
+    }
+  }
+  function navigate(active, push = true) {
+    hideMenu();
+    state.active = active;
+    state.page = 1;
+    state.selected.clear();
+    state.anchor = null;
+    $('search').value = '';
+    render();
+    if (push) history.pushState(null, '', '#' + encodeURIComponent(active));
+  }
+  function changePage(delta) {
+    const max = Math.max(1, Math.ceil(filtered().length / PAGE_SIZE));
+    const next = Math.max(1, Math.min(max, state.page + delta));
+    if (next === state.page) return;
+    hideMenu();
+    state.page = next;
+    render();
+    const top = $('stickyTools').getBoundingClientRect().top;
+    if (top < 0) $('stickyTools').scrollIntoView({block: 'start'});
+  }
+  function renderNavigation() {
+    const counts = Object.fromEntries(Object.keys(C.TYPES).map(type => [type, state.files.filter(f => C.kind(f.path) === type).length]));
+    counts.all = state.files.length;
+    counts.favorites = state.files.filter(f => state.meta.favorites.includes(f.path)).length;
+    const items = [['all', '全部文件', 'grid'], ...Object.entries(C.TYPES).map(([id, type]) => [id, type.label, type.icon]), ['favorites', '我的喜欢', 'heart']];
+    $('navigation').innerHTML = items.map(([id, label, glyph]) => `<button class="nav-item ${state.active === id ? 'active' : ''}" data-nav="${id}" ${state.active === id ? 'aria-current="page"' : ''}>${icon(glyph)}<span>${label}</span><span class="nav-count">${state.loaded ? counts[id] : '—'}</span></button>`).join('');
+    $('collections').innerHTML = state.meta.collections.map(collection => `<div class="collection-row ${state.active === 'c:' + collection.id ? 'active' : ''}" data-collection="${escape(collection.id)}"><button class="nav-item" data-nav="c:${escape(collection.id)}">${icon('folder')}<span class="collection-name">${escape(collection.name)}</span><span class="nav-count">${state.files.filter(f => collection.paths.includes(f.path)).length}</span></button><button class="icon-button collection-more" data-collection-menu="${escape(collection.id)}" aria-label="管理收藏夹 ${escape(collection.name)}">${icon('more')}</button></div>`).join('');
+    $('categories').innerHTML = Object.entries(C.TYPES).map(([id, type]) => `<button class="category ${id} ${state.active === id ? 'active' : ''}" data-nav="${id}"><span class="category-icon">${icon(type.icon)}</span><span><strong>${type.label}</strong><small>${type.description}</small></span><span class="category-count">${state.loaded ? counts[id] : '—'}</span></button>`).join('');
+    const title = items.find(item => item[0] === state.active)?.[1] || currentCollection()?.name || '全部文件';
+    $('sectionTitle').textContent = $('crumb').textContent = title;
+    $('collectionActions').hidden = !currentCollection();
+    $('connection').textContent = state.token ? 'Token 已配置' : '只读浏览';
+  }
+  function render() {
+    renderNavigation();
+    const list = filtered();
+    const visiblePaths = new Set(list.map(file => file.path));
+    state.selected = new Set([...state.selected].filter(path => visiblePaths.has(path)));
+    const totalPages = Math.max(1, Math.ceil(list.length / PAGE_SIZE));
+    state.page = Math.min(state.page, totalPages);
+    const shown = list.slice((state.page - 1) * PAGE_SIZE, state.page * PAGE_SIZE);
+    $('fileCount').textContent = state.loaded ? `${list.length} 个文件` : '尚未同步';
+    $('dateHint').hidden = !$('sort').value.startsWith('uploaded');
+    $('viewHint').textContent = protectedView() ? '此处移出只改变收藏关系；不会删除 GitHub 原文件。' : '自动分类仅整理视图，不改变文件的 GitHub 地址。';
+    $('files').className = state.view === 'grid' ? 'file-grid' : '';
+    document.querySelector('.table-head').hidden = state.view === 'grid';
+    $('listView').classList.toggle('active', state.view === 'list');
+    $('gridView').classList.toggle('active', state.view === 'grid');
+    $('files').innerHTML = shown.length ? shown.map(fileRow).join('') : `<div class="empty">${icon(state.loading ? 'refresh' : 'folder')}<strong>${state.loading ? '正在读取你的文件库' : state.error && !state.loaded ? '暂时无法连接' : $('search').value ? '没有找到匹配文件' : '这里还空着'}</strong><span>${state.loading ? '稍等片刻，文件会自动分类。' : state.error && !state.loaded ? '请检查网络，或在设置中连接 GitHub。' : '上传文件，或从全部文件中加入收藏夹。'}</span></div>`;
+    const pager = `<button data-page="-1" ${state.page === 1 ? 'disabled' : ''} aria-label="上一页">‹</button><span>${state.page} / ${totalPages}</span><button data-page="1" ${state.page === totalPages ? 'disabled' : ''} aria-label="下一页">›</button>`;
+    $('topPagination').innerHTML = $('pagination').innerHTML = pager;
+    $('pageSummary').textContent = list.length ? `${(state.page - 1) * PAGE_SIZE + 1}–${Math.min(state.page * PAGE_SIZE, list.length)} / ${list.length} 个文件` : '每页最多 10 个文件';
+    updateSelectionUI();
+    document.querySelectorAll('[data-thumb]').forEach(image => image.addEventListener('error', () => { image.parentElement.innerHTML = icon('image'); }, {once: true}));
+  }
+  function fileRow(file) {
+    const path = file.path, name = C.nameOf(path), type = C.kind(path);
+    const folder = path.includes('/') ? path.slice(0, path.lastIndexOf('/')) : '根目录';
+    const thumbnail = type === 'image' && !['gif', 'svg', 'heic'].includes(C.extension(path)) && file.size < 3 * 1048576
+      ? `<img data-thumb src="${escape(C.rawURL(path))}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">` : icon(C.TYPES[type].icon);
+    const date = state.meta.uploadedAt[path];
+    const subtitle = $('sort').value.startsWith('uploaded') ? date ? '上传于 ' + new Date(date).toLocaleString('zh-CN', {month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit'}) : '无本机上传记录' : folder;
+    return `<article class="file-row ${state.selected.has(path) ? 'selected' : ''}" data-file="${escape(path)}">
+      <label class="file-check"><input type="checkbox" data-select="${escape(path)}" aria-label="选择 ${escape(name)}" ${state.selected.has(path) ? 'checked' : ''}></label>
+      <button class="file-info" data-preview="${escape(path)}" draggable="${matchMedia('(pointer:fine)').matches}" aria-label="${type === 'audio' ? '播放' : '预览'} ${escape(name)}"><span class="thumb ${type}">${thumbnail}</span><span class="file-text"><span class="file-name" title="${escape(name)}">${escape(name)}</span><span class="file-path">${escape(subtitle)}${state.meta.favorites.includes(path) ? ' · 已喜欢' : ''}</span></span></button>
+      <div class="file-type"><span class="badge">${escape(C.extension(path) || '文件')}</span></div><span class="file-size">${C.bytes(file.size || 0)}</span>
+      <div class="row-actions"><button class="icon-button copy-action" data-copy="${escape(path)}" aria-label="复制 ${escape(name)} 的外链">${icon('link')}</button><button class="icon-button" data-file-menu="${escape(path)}" aria-label="更多操作 ${escape(name)}">${icon('more')}</button></div>
+    </article>`;
+  }
+  function updateSelectionUI() {
+    const shown = pageFiles();
+    const count = shown.filter(f => state.selected.has(f.path)).length;
+    $('selectPage').checked = shown.length > 0 && count === shown.length;
+    $('selectPage').indeterminate = count > 0 && count < shown.length;
+    $('selectPage').disabled = !shown.length;
+    $('selectionCount').textContent = state.selected.size ? `已选 ${state.selected.size} 项` : '未选择';
+    $('clearSelection').hidden = !state.selected.size;
+    $('batchCollection').disabled = !state.selected.size;
+    $('batchRemove').hidden = !state.selected.size || !protectedView();
+    $('batchRemove').textContent = state.active === 'favorites' ? '取消喜欢' : '移出此收藏夹';
+    $('selectAll').disabled = !filtered().length;
+    for (const row of document.querySelectorAll('[data-file]')) {
+      const selected = state.selected.has(row.dataset.file);
+      row.classList.toggle('selected', selected);
+      row.querySelector('[data-select]').checked = selected;
+    }
+  }
+  function selectPath(path, checked, extend = false) {
+    if (extend && state.anchor) {
+      const paths = filtered().map(f => f.path), start = paths.indexOf(state.anchor), end = paths.indexOf(path);
+      if (start >= 0 && end >= 0) for (const p of paths.slice(Math.min(start, end), Math.max(start, end) + 1)) checked ? state.selected.add(p) : state.selected.delete(p);
+    } else checked ? state.selected.add(path) : state.selected.delete(path);
+    state.anchor = path;
+    updateSelectionUI();
+  }
+
+  // Modal lifecycle owns media and asynchronous previews, so closing always releases them.
+  function releaseModal() { modalSerial++; modalCleanup(); modalCleanup = () => {}; }
+  function openModal(title, content) {
+    hideMenu();
+    releaseModal();
+    $('modalTitle').textContent = title;
+    $('modalBody').innerHTML = content;
+    if (!$('modal').open) $('modal').showModal();
+    return modalSerial;
+  }
+  function closeModal() {
+    if (state.busy) return toast('操作仍在进行，请等待完成。');
+    releaseModal();
+    $('modal').close();
+    $('modalBody').innerHTML = '';
+  }
+  function bindForm(id, handler) {
+    $(id).onsubmit = async event => { event.preventDefault(); if (!state.busy) await handler(); };
+  }
+  function downloadBlob(blob, filename) {
+    const anchor = document.createElement('a'), url = URL.createObjectURL(blob);
+    anchor.href = url; anchor.download = filename; anchor.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+  async function copyLink(path) {
+    try { await navigator.clipboard.writeText(C.pagesURL(path)); toast('已复制 GitHub Pages 外链'); }
+    catch {
+      openModal('复制外链', `<p class="help">长按选中并复制下方链接。</p><label class="field"><input id="copyFallback" readonly value="${escape(C.pagesURL(path))}"></label>`);
+      $('copyFallback').select();
+    }
+  }
+  function toggleFavorite(paths) {
+    const allLiked = paths.every(path => state.meta.favorites.includes(path));
+    const favorites = new Set(state.meta.favorites);
+    for (const path of paths) allLiked ? favorites.delete(path) : favorites.add(path);
+    if (saveMeta({...state.meta, favorites: [...favorites]})) toast(allLiked ? '已取消喜欢' : '已加入喜欢');
+  }
+  function removeMembership(paths, id = currentCollection()?.id) {
+    const isFavorites = !id && state.active === 'favorites';
+    if (!id && !isFavorites) return;
+    const original = isFavorites ? state.meta.favorites : state.meta.collections.find(c => c.id === id)?.paths || [];
+    const removed = paths.filter(path => original.includes(path));
+    const next = isFavorites ? {...state.meta, favorites: original.filter(path => !removed.includes(path))} : C.updateMembership(state.meta, removed, {[id]: false});
+    if (!saveMeta(next)) return;
+    state.selected = new Set([...state.selected].filter(path => !removed.includes(path)));
+    render();
+    toast(`已${isFavorites ? '取消喜欢' : '移出收藏夹'} ${removed.length} 项，原文件保留`, () => {
+      if (isFavorites) saveMeta({...state.meta, favorites: [...new Set([...state.meta.favorites, ...removed])]});
+      else if (state.meta.collections.some(c => c.id === id)) saveMeta(C.updateMembership(state.meta, removed, {[id]: true}));
+    });
+  }
+  function collectionDialog(existing, onSaved) {
+    openModal(existing ? '重命名收藏夹' : '新建收藏夹', `<form id="collectionForm"><p class="help">收藏夹保存在此浏览器，不移动 GitHub 文件。Enter 保存。</p><label class="field"><span>名称</span><input id="collectionName" maxlength="30" required placeholder="例如：旅行照片、常听的音乐" value="${escape(existing?.name || '')}"></label><div class="dialog-actions"><button type="submit" class="primary">保存</button></div></form>`);
+    $('collectionName').focus();
+    bindForm('collectionForm', () => {
+      const name = $('collectionName').value.trim();
+      if (!name) return toast('请输入收藏夹名称');
+      if (state.meta.collections.some(c => c.name === name && c.id !== existing?.id)) return toast('已存在同名收藏夹');
+      const collections = existing ? state.meta.collections.map(c => c.id === existing.id ? {...c, name} : c) : [...state.meta.collections, {id: crypto.randomUUID(), name, paths: []}];
+      if (!saveMeta({...state.meta, collections})) return;
+      closeModal();
+      toast('收藏夹已保存');
+      if (onSaved) onSaved();
+    });
+  }
+  function membershipDialog(inputPaths) {
+    const paths = knownPaths(inputPaths);
+    if (!paths.length) return;
+    const changes = {};
+    openModal(`收藏归属 · ${paths.length} 个文件`, `<form id="membershipForm"><p class="help">可同时加入多个收藏夹。勾选加入，取消勾选移出；“部分已加入”不修改时保持原状。</p><div class="membership-list">${state.meta.collections.map(collection => {
+      const status = C.membershipState(collection, paths);
+      return `<label class="membership-option"><input type="checkbox" data-membership="${escape(collection.id)}" data-state="${status}" aria-label="${escape(collection.name)}" ${status === 'all' ? 'checked' : ''}><span>${escape(collection.name)}</span><small>${status === 'mixed' ? '部分已加入' : status === 'all' ? '全部已加入' : '未加入'}</small></label>`;
+    }).join('') || '<p class="help">还没有收藏夹，先创建一个吧。</p>'}</div><div class="dialog-actions"><button type="button" class="secondary" id="newCollectionInline">新建收藏夹</button><button type="submit" class="primary">保存归属</button></div></form>`);
+    document.querySelectorAll('[data-membership]').forEach(input => {
+      input.indeterminate = input.dataset.state === 'mixed';
+      input.onchange = () => {
+        changes[input.dataset.membership] = input.checked;
+        input.parentElement.querySelector('small').textContent = input.checked ? '将全部加入' : '将全部移出';
+      };
+    });
+    $('newCollectionInline').onclick = () => collectionDialog(null, () => membershipDialog(paths));
+    bindForm('membershipForm', () => {
+      if (saveMeta(C.updateMembership(state.meta, paths, changes))) { closeModal(); toast(`已保存 ${paths.length} 个文件的收藏归属`); }
+    });
+  }
+  function addToCollection(paths, id) {
+    paths = knownPaths(paths);
+    if (!paths.length || !state.meta.collections.some(c => c.id === id)) return;
+    if (saveMeta(C.updateMembership(state.meta, paths, {[id]: true}))) toast(`已加入 ${paths.length} 个文件；其他收藏归属保留`);
+  }
+  function reorderCollection(id, delta) {
+    const collections = [...state.meta.collections], index = collections.findIndex(c => c.id === id), next = index + delta;
+    if (index < 0 || next < 0 || next >= collections.length) return;
+    [collections[index], collections[next]] = [collections[next], collections[index]];
+    saveMeta({...state.meta, collections});
+  }
+  function deleteCollection(id) {
+    const collection = state.meta.collections.find(c => c.id === id);
+    if (!collection) return;
+    openModal('删除收藏夹', `<p>删除“${escape(collection.name)}”收藏夹？</p><p class="help">只删除这份分类。里面的文件、其他收藏夹及 GitHub 原文件全部保留。</p><div class="dialog-actions"><button class="secondary" id="cancelCollectionDelete">取消</button><button class="secondary danger" id="confirmCollectionDelete">删除收藏夹，保留文件</button></div>`);
+    $('cancelCollectionDelete').onclick = closeModal;
+    $('confirmCollectionDelete').onclick = () => {
+      if (!saveMeta({...state.meta, collections: state.meta.collections.filter(c => c.id !== id)})) return;
+      closeModal();
+      if (state.active === 'c:' + id) navigate('all');
+      toast('收藏夹已删除，原文件保留', () => {
+        if (!state.meta.collections.some(c => c.id === id)) saveMeta({...state.meta, collections: [...state.meta.collections, collection]});
+      });
+    };
+  }
+
+  // The same action definitions drive menus and previews. Collection views never offer repository deletion.
+  function fileActions(path, includePreview = true) {
+    const collection = currentCollection();
+    const actions = [];
+    if (includePreview) actions.push({label: C.kind(path) === 'audio' ? '播放音频' : '预览文件', icon: C.TYPES[C.kind(path)].icon, run: () => preview(path)});
+    actions.push(
+      {label: '复制外链', icon: 'link', run: () => copyLink(path)},
+      {label: '打开原文件', icon: 'external', run: () => window.open(C.rawURL(path), '_blank', 'noopener,noreferrer')},
+      {label: state.meta.favorites.includes(path) ? '取消喜欢' : '喜欢', icon: 'heart', run: () => toggleFavorite([path])},
+      {label: '加入 / 管理收藏夹', icon: 'folder', run: () => membershipDialog([path])},
+      {label: '重命名', icon: 'edit', run: () => renameDialog(path)}
+    );
+    if (collection) actions.push({label: '移出此收藏夹', icon: 'arrow', run: () => { closeModal(); removeMembership([path], collection.id); }});
+    if (!protectedView()) actions.push(
+      {label: '移动实际路径', icon: 'folder', run: () => moveDialog(path)},
+      {label: '删除原文件…', icon: 'trash', danger: true, run: () => deleteFileDialog(path)}
+    );
+    return actions;
+  }
+  function hideMenu(restoreFocus = false) {
+    $('contextMenu').hidden = true;
+    menuActions = [];
+    if (restoreFocus && menuAnchor?.isConnected) menuAnchor.focus();
+  }
+  function showMenu(actions, anchor, position) {
+    hideMenu();
+    menuAnchor = anchor;
+    menuActions = actions;
+    const menu = $('contextMenu');
+    menu.innerHTML = actions.map((action, index) => `<button role="menuitem" class="${action.danger ? 'danger' : ''}" data-menu-action="${index}" ${action.disabled ? 'disabled' : ''}>${icon(action.icon)}${escape(action.label)}</button>`).join('');
+    menu.hidden = false;
+    const rect = anchor?.getBoundingClientRect();
+    const x = position?.x ?? rect?.right ?? 20, y = position?.y ?? rect?.bottom ?? 20;
+    menu.style.left = Math.max(8, Math.min(x, innerWidth - menu.offsetWidth - 8)) + 'px';
+    menu.style.top = Math.max(8, Math.min(y, innerHeight - menu.offsetHeight - 8)) + 'px';
+    menu.querySelector('button:not(:disabled)')?.focus();
+  }
+  function showFileMenu(path, anchor, position) {
+    let actions;
+    if (state.selected.size > 1 && state.selected.has(path)) {
+      const paths = [...state.selected];
+      actions = [{label: `加入收藏夹（${paths.length} 项）`, icon: 'folder', run: () => membershipDialog(paths)}, {label: '喜欢 / 取消喜欢', icon: 'heart', run: () => toggleFavorite(paths)}];
+      if (protectedView()) actions.push({label: state.active === 'favorites' ? '取消喜欢' : '移出此收藏夹', icon: 'arrow', run: () => removeMembership(paths)});
+      actions.push({label: '取消选择', icon: 'close', run: () => { state.selected.clear(); updateSelectionUI(); }});
+    } else actions = fileActions(path);
+    showMenu(actions, anchor, position);
+  }
+  function showCollectionMenu(id, anchor, position) {
+    const collection = state.meta.collections.find(c => c.id === id);
+    if (!collection) return;
+    const index = state.meta.collections.indexOf(collection);
+    showMenu([
+      {label: '打开收藏夹', icon: 'folder', run: () => navigate('c:' + id)},
+      {label: '重命名收藏夹', icon: 'edit', run: () => collectionDialog(collection)},
+      {label: '将已选文件加入此处', icon: 'plus', disabled: !state.selected.size, run: () => addToCollection([...state.selected], id)},
+      {label: '向上移动', icon: 'arrow', disabled: index === 0, run: () => reorderCollection(id, -1)},
+      {label: '向下移动', icon: 'arrow', disabled: index === state.meta.collections.length - 1, run: () => reorderCollection(id, 1)},
+      {label: '删除收藏夹（保留文件）', icon: 'trash', danger: true, run: () => deleteCollection(id)}
+    ], anchor, position);
+  }
+  function preview(path) {
+    const file = state.files.find(f => f.path === path);
+    if (!file) return;
+    const type = C.kind(path), actions = fileActions(path, false);
+    const serial = openModal(C.nameOf(path), `<div class="preview-media">${type === 'image' ? `<img id="imagePreview" src="${escape(C.rawURL(path))}" alt="${escape(C.nameOf(path))}">` : type === 'audio' ? `<span class="audio-art">${icon('audio')}</span><audio id="audioPreview" controls preload="none" src="${escape(C.rawURL(path))}"></audio><p id="audioStatus" class="help">正在播放…</p>` : C.isText(path) ? '<pre id="textPreview" class="text-preview">正在读取文本…</pre>' : `<span class="audio-art">${icon('file')}</span><p class="help">此格式可通过“打开原文件”查看。</p>`}</div><div class="detail-path">${escape(path)} · ${C.bytes(file.size || 0)}</div><p class="help">${protectedView() ? '这里的移出仅改变收藏关系，不会删除原文件。' : '上传、改名后，Pages 外链可能需要等待发布。'}</p><div class="action-grid">${actions.map((action, index) => `<button class="${action.danger ? 'danger' : ''}" data-detail-action="${index}">${icon(action.icon)}${escape(action.label)}</button>`).join('')}</div>`);
+    document.querySelectorAll('[data-detail-action]').forEach(button => button.onclick = () => {
+      const action = actions[Number(button.dataset.detailAction)];
+      action.run();
+      if (action.icon === 'heart' && button.isConnected) button.innerHTML = icon('heart') + (state.meta.favorites.includes(path) ? '取消喜欢' : '喜欢');
+    });
+    if (type === 'audio') {
+      const audio = $('audioPreview');
+      modalCleanup = () => { audio.pause(); audio.removeAttribute('src'); audio.load(); };
+      audio.onplaying = () => { if ($('audioStatus')) $('audioStatus').textContent = '正在播放'; };
+      audio.onpause = () => { if ($('audioStatus')) $('audioStatus').textContent = '已暂停'; };
+      audio.onerror = () => { if ($('audioStatus')) $('audioStatus').textContent = '音频暂不可用，请检查网络或打开原文件。'; };
+      // Called directly during the user's click, before any await, for iOS user activation.
+      audio.play().catch(error => {
+        if (serial === modalSerial && $('audioStatus')) $('audioStatus').textContent = error.name === 'NotAllowedError' ? '浏览器未允许自动播放，请点播放器的播放按钮。' : '暂时无法播放，请点播放重试或打开原文件。';
+      });
+    } else if (type === 'image') {
+      $('imagePreview').onerror = () => { if (serial === modalSerial) $('imagePreview').replaceWith(document.createTextNode('预览暂不可用，请尝试打开原文件。')); };
+    } else if (C.isText(path)) {
+      const controller = new AbortController();
+      modalCleanup = () => controller.abort();
+      if (file.size > 512 * 1024) { $('textPreview').textContent = '文本超过 512 KB，请打开原文件查看。'; return; }
+      const timeout = setTimeout(() => controller.abort(), 20000);
+      fetch(C.rawURL(path), {signal: controller.signal}).then(response => {
+        if (!response.ok) throw Error('读取失败');
+        return response.text();
+      }).then(text => { if (serial === modalSerial) $('textPreview').textContent = text; }).catch(() => {
+        if (serial === modalSerial && $('textPreview')) $('textPreview').textContent = '文本读取失败，请打开原文件查看。';
+      }).finally(() => clearTimeout(timeout));
+    }
+  }
+
+  function requireToken() {
+    if (state.token) return true;
+    toast('连接 GitHub Token 后即可修改仓库文件。');
+    settings();
+    return false;
+  }
+  async function repositoryMutation(message, makeChanges, onSuccess) {
+    if (state.busy) return;
+    setBusy(true);
+    ++state.generation;
+    try {
+      const entries = await repo.mutate(message, makeChanges);
+      state.files = entries.filter(C.visibleFile);
+      try { localStorage.setItem(CACHE_KEY, JSON.stringify({files: state.files, time: Date.now()})); } catch {}
+      state.loaded = true;
+      state.error = '';
+      state.selected = new Set(knownPaths([...state.selected]));
+      onSuccess?.();
+      setBusy(false);
+      closeModal();
+      render();
+      notice('GitHub 操作已成功。Pages 外链需等待发布完成，请稍后验证。');
+      $('syncStatus').textContent = '已提交 · Pages 待发布';
+      toast('操作已完成');
+    } catch (error) { toast(error.message); }
+    finally { setBusy(false); }
+  }
+  function renameDialog(path) {
+    if (!requireToken()) return;
+    const file = state.files.find(f => f.path === path), name = C.nameOf(path);
+    if (!file) return toast('文件已不在当前列表，请刷新后重试。');
+    const suffix = name.match(/\.[^.]+$/)?.[0] || '';
+    openModal('重命名文件', `<form id="renameForm"><label class="field"><span>文件名称（保留 ${escape(suffix || '原格式')}）</span><input id="newName" required value="${escape(suffix ? name.slice(0, -suffix.length) : name)}"></label><p class="help">当前：${escape(path)}<br>Enter 保存。改名会使旧外链失效。</p><div class="dialog-actions"><button type="submit" class="primary">保存名称</button></div></form>`);
+    $('newName').select();
+    bindForm('renameForm', () => {
+      const input = $('newName').value.trim();
+      if (!C.validName(input)) return toast('名称不能为空、以点开头或包含斜杠。');
+      const newPath = path.slice(0, path.lastIndexOf('/') + 1) + C.preserveExtension(name, input);
+      if (newPath === path) return toast('名称没有变化');
+      return repositoryMutation(`Rename ${path} to ${newPath}`, entries => C.moveChanges(entries, path, newPath, file.sha), () => afterRepositoryChange(path, newPath));
+    });
+  }
+  function moveDialog(path) {
+    if (!requireToken()) return;
+    const file = state.files.find(f => f.path === path);
+    if (!file) return toast('文件已不在当前列表，请刷新后重试。');
+    openModal('移动实际路径', `<form id="moveForm"><p class="help">此操作会移动 GitHub 原文件并改变外链。只想分类，请使用收藏夹。</p><label class="field"><span>目标目录（留空为根目录）</span><input id="targetFolder" placeholder="例如：图/旅行"></label><p class="help">当前：${escape(path)}</p><div class="dialog-actions"><button type="submit" class="primary">确认移动</button></div></form>`);
+    $('targetFolder').focus();
+    bindForm('moveForm', () => {
+      const folder = $('targetFolder').value.trim().replace(/^\/+|\/+$/g, '');
+      if (folder && !folder.split('/').every(C.validName)) return toast('文件夹名称无效');
+      const newPath = (folder ? folder + '/' : '') + C.nameOf(path);
+      if (newPath === path) return toast('目标与当前位置相同');
+      return repositoryMutation(`Move ${path} to ${newPath}`, entries => C.moveChanges(entries, path, newPath, file.sha), () => afterRepositoryChange(path, newPath));
+    });
+  }
+  function deleteFileDialog(path) {
+    // Defense in depth: even a stale menu action cannot delete from a collection view.
+    if (protectedView()) return toast('收藏夹中只能移出。删除原文件请进入“全部文件”。');
+    if (!requireToken()) return;
+    const file = state.files.find(f => f.path === path);
+    if (!file) return toast('文件已不在当前列表，请刷新后重试。');
+    openModal('删除 GitHub 原文件', `<p>确定删除 <strong>${escape(C.nameOf(path))}</strong>？</p><p class="help">这会删除仓库原文件并使外链失效，不只是移出收藏夹。</p><div class="dialog-actions"><button class="secondary" id="cancelDelete">取消</button><button class="secondary danger" id="confirmDelete">确认删除原文件</button></div>`);
+    $('cancelDelete').onclick = closeModal;
+    $('confirmDelete').onclick = () => {
+      if (protectedView()) return;
+      return repositoryMutation('Delete ' + path, entries => {
+        const source = entries.find(e => e.path === path);
+        if (!source || source.sha !== file.sha) throw Error('原文件已被修改或删除，请刷新后重新确认。');
+        return [{path, type: 'blob', mode: source.mode, sha: null}];
+      }, () => afterRepositoryChange(path, null));
+    };
+  }
+  function settings() {
+    if (state.busy) return toast('请等待当前操作完成');
+    openModal('连接与设置', `<form id="tokenForm"><p class="help">GitHub · iry31569716 / mp3 · main<br>公开文件无需 Token 即可浏览。上传、改名和删除需要 Contents 读写权限。</p><label class="field"><span>GitHub Token</span><span class="token-field"><input type="password" id="tokenInput" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="仅授权 mp3 仓库的 Token"><button type="button" class="secondary" id="toggleToken">显示</button></span></label><label class="settings-line"><input type="checkbox" id="rememberToken" ${read(TOKEN_KEY, '') ? 'checked' : ''}>记住此设备上的 Token</label><p class="help">默认仅本次使用。勾选后保存在此网站的当前浏览器中，请勿在共享设备上保存。</p><div class="dialog-actions"><button type="button" class="secondary danger" id="forgetToken">清除 Token</button><button type="submit" class="primary" id="connectToken">验证并连接</button></div></form><hr><label class="field"><span>外观</span><select id="themeSelect"><option value="system">跟随系统（iOS 自动深色）</option><option value="light">浅色</option><option value="dark">深色</option></select></label><div class="dialog-actions wrap"><button class="secondary" id="createFromSettings">新建收藏夹</button><button class="secondary" id="exportMeta">导出分类</button><button class="secondary" id="importMeta">导入分类</button></div><input type="file" id="importFile" accept="application/json,.json" hidden><p class="help">收藏夹、喜欢和本机上传时间可导出备份，不包含 Token。不同设备或浏览器需要手动导入。单文件上传上限 20 MB。</p>`);
+    $('tokenInput').value = state.token;
+    $('themeSelect').value = state.theme;
+    $('themeSelect').onchange = event => { state.theme = event.target.value; persist('qingji:theme', state.theme); applyTheme(); };
+    $('toggleToken').onclick = () => { const input = $('tokenInput'); input.type = input.type === 'password' ? 'text' : 'password'; $('toggleToken').textContent = input.type === 'password' ? '显示' : '隐藏'; };
+    $('forgetToken').onclick = () => {
+      try { localStorage.removeItem(TOKEN_KEY); } catch { return toast('浏览器拒绝清除存储，请在浏览器设置中清除此站点数据。'); }
+      state.token = ''; $('tokenInput').value = ''; $('rememberToken').checked = false;
+      render(); toast('已清除 Token');
+    };
+    bindForm('tokenForm', async () => {
+      const next = $('tokenInput').value.trim();
+      if (!next) return toast('请输入 Token');
+      const previous = state.token, remember = $('rememberToken').checked;
+      state.token = next;
+      setBusy(true);
+      $('connectToken').disabled = true;
+      try {
+        await repo.request('');
+        await repo.request('/git/ref/heads/' + C.encodePath(C.CONFIG.branch));
+        if (remember) persist(TOKEN_KEY, next);
+        else try { localStorage.removeItem(TOKEN_KEY); } catch { toast('无法清除旧保存值，请检查浏览器存储权限。'); }
+        setBusy(false); closeModal();
+        toast('连接成功；写入权限将在实际操作时确认。');
+        await loadFiles();
+      } catch (error) { state.token = previous; toast(error.message); if ($('connectToken')) $('connectToken').disabled = false; }
+      finally { setBusy(false); }
+    });
+    $('createFromSettings').onclick = () => collectionDialog();
+    $('exportMeta').onclick = () => downloadBlob(new Blob([JSON.stringify({version: 2, repository: 'iry31569716/mp3', ...state.meta}, null, 2)], {type: 'application/json'}), '轻集-收藏夹备份.json');
+    $('importMeta').onclick = () => $('importFile').click();
+    $('importFile').onchange = async event => {
+      try {
+        const file = event.target.files[0];
+        if (!file) return;
+        if (file.size > 1048576) throw Error('备份文件超过 1 MB');
+        const data = JSON.parse(await file.text());
+        if (data.repository !== 'iry31569716/mp3' || !Array.isArray(data.collections) || data.collections.length > 200 || !Array.isArray(data.favorites) || !data.favorites.every(p => typeof p === 'string') || !data.collections.every(c => typeof c.id === 'string' && typeof c.name === 'string' && c.name.length <= 30 && Array.isArray(c.paths) && c.paths.every(p => typeof p === 'string'))) throw Error('备份格式无效');
+        if (!confirm('用此备份替换当前收藏夹、喜欢和上传时间记录？GitHub 文件不受影响。')) return;
+        if (saveMeta(C.normalizeMeta(data))) { closeModal(); navigate('all'); toast('备份已导入'); }
+      } catch (error) { toast('导入失败：' + error.message); }
+    };
+  }
+  async function uploadFiles(input) {
+    if (state.busy) return toast('已有操作正在进行');
+    if (!requireToken()) return;
+    const files = Array.from(input);
+    if (!files.length) return;
+    let cancelled = false, success = 0;
+    setBusy(true);
+    ++state.generation;
+    openModal('上传文件', `<p class="help">图片 → 图 / 音频 → mp3 / 文档 → 文档。逐个上传，减少冲突。取消会在当前文件完成后停止。</p><div>${files.map((file, i) => `<div class="upload-item"><strong>${escape(file.name)}</strong><progress id="progress-${i}" max="100" value="0"></progress><span class="upload-status" id="status-${i}">等待上传 · ${C.bytes(file.size)}</span></div>`).join('')}</div><div class="dialog-actions"><button class="secondary" id="cancelUpload">取消剩余上传</button><button class="primary" id="doneUpload" disabled>完成</button></div>`);
+    $('cancelUpload').onclick = () => { cancelled = true; $('cancelUpload').disabled = true; toast('当前文件完成后停止，已上传文件会保留。'); };
+    try {
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i], status = $('status-' + i);
+        if (cancelled) { status.textContent = '已取消'; continue; }
+        try {
+          if (file.size > 20 * 1048576) throw Error('超过 20 MB 限制，请缩小后上传。');
+          if (!C.validName(file.name)) throw Error('文件名无效或以点开头。');
+          if (!C.allowedUpload(file.name)) throw Error('暂不支持此格式。支持图片、音频、文档及 ZIP / 7Z。');
+          const path = C.uploadPath(file.name);
+          status.textContent = '检查同名文件…';
+          const existing = await repo.existing(path);
+          if (existing && (existing.type !== 'file' || !existing.sha)) throw Error('目标不是可覆盖的文件。');
+          if (existing && !confirm(`“${path}”已存在，确定覆盖？`)) { status.textContent = '已跳过，保留原文件'; continue; }
+          if (cancelled) { status.textContent = '已取消'; continue; }
+          status.textContent = '读取并上传文件…';
+          const result = await repo.upload(path, file, existing?.sha, percent => { $('progress-' + i).value = percent; status.textContent = percent >= 95 ? '传输完成，等待 GitHub 提交…' : `上传中 ${percent}%`; });
+          $('progress-' + i).value = 100;
+          status.textContent = '已提交到 GitHub · Pages 待发布';
+          state.files = state.files.filter(f => f.path !== path);
+          state.files.push({path, type: 'blob', mode: '100644', sha: result.content.sha, size: file.size});
+          state.loaded = true;
+          const next = {...state.meta, uploadedAt: {...state.meta.uploadedAt, [path]: Date.now()}};
+          if (!saveMeta(next)) { state.meta = next; toast('上传成功，但本机时间记录未保存。'); }
+          success++;
+        } catch (error) { status.textContent = error.message; status.classList.add('error'); }
+      }
+    } finally {
+      setBusy(false);
+      $('cancelUpload').hidden = true;
+      $('doneUpload').disabled = false;
+      $('doneUpload').onclick = closeModal;
+      render();
+      if (success) {
+        notice(`${success} 个文件已提交到 GitHub。Pages 外链需等待发布完成。`);
+        $('syncStatus').textContent = '已提交 · Pages 待发布';
+      }
+    }
+  }
+  function chooseFiles() { if (!state.busy && requireToken()) $('fileInput').click(); }
+  function shortcutHelp() {
+    openModal('快捷键与小提示', `<div class="help-list"><p><kbd>Enter</kbd> 保存名称、收藏归属或连接设置；中文输入法选词时不会误提交。</p><p><kbd>Esc</kbd> 关闭菜单 / 弹窗，再按可取消选择。</p><p><kbd>⌘ / Ctrl + A</kbd> 全选当前分类的搜索结果，包含其他页；输入框中仍是选择文字。</p><p><kbd>Shift + 点击复选框</kbd> 连续选择一个范围。</p><p><kbd>←</kbd> <kbd>→</kbd> 翻页；<kbd>⌘ / Ctrl + K</kbd> 搜索；只选一项时 <kbd>F2</kbd> 重命名。</p><p>手机可在文件列表中间左右滑动翻页，或随时使用吸顶翻页栏。屏幕边缘保留浏览器返回手势。</p><p>桌面可将单个或已选文件拖到左侧收藏夹，只添加归属，不移动原文件。手机用“加入收藏夹”更稳定。</p></div>`);
+  }
+
+  // Delegated events keep rows and menus lightweight; no per-file network work on selection.
+  function bindEvents() {
+    document.addEventListener('click', event => {
+      const target = event.target;
+      const menuButton = target.closest('[data-menu-action]');
+      if (menuButton) { const action = menuActions[Number(menuButton.dataset.menuAction)]; hideMenu(true); if (action && !action.disabled) action.run(); return; }
+      const fileMenu = target.closest('[data-file-menu]');
+      if (fileMenu) return showFileMenu(fileMenu.dataset.fileMenu, fileMenu);
+      const collectionMenu = target.closest('[data-collection-menu]');
+      if (collectionMenu) return showCollectionMenu(collectionMenu.dataset.collectionMenu, collectionMenu);
+      if (!target.closest('#contextMenu')) hideMenu();
+      const selection = target.closest('[data-select]');
+      if (selection) return selectPath(selection.dataset.select, selection.checked, event.shiftKey);
+      const nav = target.closest('[data-nav]');
+      if (nav) return navigate(nav.dataset.nav);
+      const previewButton = target.closest('[data-preview]');
+      if (previewButton) {
+        if (event.ctrlKey || event.metaKey || event.shiftKey) return selectPath(previewButton.dataset.preview, !state.selected.has(previewButton.dataset.preview), event.shiftKey);
+        return preview(previewButton.dataset.preview);
+      }
+      const copy = target.closest('[data-copy]');
+      if (copy) return copyLink(copy.dataset.copy);
+      const pager = target.closest('[data-page]');
+      if (pager && !pager.disabled) changePage(Number(pager.dataset.page));
+    });
+    document.addEventListener('contextmenu', event => {
+      if ($('modal').open) return;
+      const collection = event.target.closest('[data-collection]');
+      const file = event.target.closest('[data-file]');
+      if (!collection && !file) return;
+      event.preventDefault();
+      const position = {x: event.clientX, y: event.clientY};
+      if (collection) showCollectionMenu(collection.dataset.collection, collection.querySelector('button'), position);
+      else showFileMenu(file.dataset.file, file.querySelector('[data-preview]'), position);
+    });
+    document.addEventListener('keydown', event => {
+      if (event.isComposing || event.keyCode === 229) return;
+      const editable = event.target.matches('input:not([type=checkbox]),textarea,select,[contenteditable=true]');
+      const menuOpen = !$('contextMenu').hidden;
+      if (menuOpen) {
+        if (event.key === 'Escape') { event.preventDefault(); hideMenu(true); return; }
+        const buttons = [...$('contextMenu').querySelectorAll('button:not(:disabled)')];
+        const index = buttons.indexOf(document.activeElement);
+        if (['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) {
+          event.preventDefault();
+          const next = event.key === 'Home' ? 0 : event.key === 'End' ? buttons.length - 1 : (index + (event.key === 'ArrowDown' ? 1 : -1) + buttons.length) % buttons.length;
+          buttons[next]?.focus();
+          return;
+        }
+      }
+      if (menuOpen || $('modal').open) return;
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') { event.preventDefault(); $('search').focus(); return; }
+      if (editable) return;
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'a') { event.preventDefault(); selectAll(); }
+      else if (event.key === 'Escape') { state.selected.clear(); updateSelectionUI(); }
+      else if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') { event.preventDefault(); changePage(event.key === 'ArrowRight' ? 1 : -1); }
+      else if (event.key === 'F2' && state.selected.size === 1) { event.preventDefault(); renameDialog([...state.selected][0]); }
+    });
+    // Prevent an IME composition Enter from also submitting a native form.
+    $('modal').addEventListener('keydown', event => {
+      if (event.key !== 'Enter') return;
+      if (event.isComposing || event.keyCode === 229) { event.preventDefault(); return; }
+      if (event.target.matches('input[type=checkbox]') && event.target.closest('form')) {
+        event.preventDefault(); event.target.closest('form').requestSubmit();
+      }
+    });
+    $('selectPage').onchange = event => { for (const file of pageFiles()) event.target.checked ? state.selected.add(file.path) : state.selected.delete(file.path); updateSelectionUI(); };
+    $('selectAll').onclick = selectAll;
+    $('clearSelection').onclick = () => { state.selected.clear(); updateSelectionUI(); };
+    $('batchCollection').onclick = () => membershipDialog([...state.selected]);
+    $('batchRemove').onclick = () => removeMembership([...state.selected]);
+    $('addCollection').onclick = () => collectionDialog();
+    $('collectionActions').onclick = event => showCollectionMenu(currentCollection().id, event.currentTarget);
+    $('search').oninput = () => {
+      clearTimeout(searchTimer);
+      state.page = 1; state.selected.clear(); state.anchor = null;
+      searchTimer = setTimeout(render, 100);
+    };
+    $('sort').onchange = () => { state.page = 1; render(); };
+    for (const view of ['list', 'grid']) $(view + 'View').onclick = () => { state.view = view; persist('qingji:view', view); render(); };
+    $('theme').onclick = () => {
+      state.theme = state.theme === 'system' ? 'light' : state.theme === 'light' ? 'dark' : 'system';
+      persist('qingji:theme', state.theme); applyTheme();
+    };
+    $('settingsTop').onclick = $('settingsSide').onclick = settings;
+    $('refresh').onclick = loadFiles;
+    $('shortcutHelp').onclick = shortcutHelp;
+    $('closeModal').onclick = closeModal;
+    $('modal').addEventListener('cancel', event => { if (state.busy) { event.preventDefault(); toast('请等待当前操作完成。'); } });
+    $('modal').addEventListener('close', () => { if (!$('modal').open) { releaseModal(); $('modalBody').innerHTML = ''; } });
+    $('upload').onclick = $('dropZone').onclick = chooseFiles;
+    $('dropZone').onkeydown = event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); chooseFiles(); } };
+    $('fileInput').onchange = event => { uploadFiles(event.target.files); event.target.value = ''; };
+    bindDragAndSwipe();
+    window.addEventListener('resize', () => hideMenu());
+    window.addEventListener('scroll', () => hideMenu(), {passive: true});
+    window.addEventListener('beforeunload', event => { if (state.busy) { event.preventDefault(); event.returnValue = ''; } });
+    window.addEventListener('hashchange', restoreHash);
+  }
+  function selectAll() { state.selected = new Set(filtered().map(file => file.path)); updateSelectionUI(); toast(`已选中当前结果的 ${state.selected.size} 个文件（含其他页）`); }
+  function bindDragAndSwipe() {
+    $('files').addEventListener('dragstart', event => {
+      const row = event.target.closest('[data-file]');
+      if (!row || !matchMedia('(pointer:fine)').matches) { event.preventDefault(); return; }
+      const path = row.dataset.file;
+      dragPaths = state.selected.has(path) ? [...state.selected] : [path];
+      event.dataTransfer.effectAllowed = 'copy';
+      event.dataTransfer.setData('application/x-qingji-files', 'internal');
+      event.dataTransfer.setData('text/plain', dragPaths.map(C.nameOf).join('\n'));
+    });
+    document.addEventListener('dragend', () => { dragPaths = []; document.querySelectorAll('.drop-target').forEach(el => el.classList.remove('drop-target')); });
+    $('collections').addEventListener('dragover', event => {
+      const row = event.target.closest('[data-collection]');
+      if (!row || !dragPaths.length) return;
+      event.preventDefault(); event.dataTransfer.dropEffect = 'copy'; row.classList.add('drop-target');
+    });
+    $('collections').addEventListener('dragleave', event => {
+      const row = event.target.closest('[data-collection]');
+      if (row && !row.contains(event.relatedTarget)) row.classList.remove('drop-target');
+    });
+    $('collections').addEventListener('drop', event => {
+      const row = event.target.closest('[data-collection]');
+      if (!row || !dragPaths.length) return;
+      event.preventDefault();
+      const paths = [...dragPaths]; dragPaths = [];
+      addToCollection(paths, row.dataset.collection);
+    });
+    for (const name of ['dragenter', 'dragover']) $('dropZone').addEventListener(name, event => {
+      if (!Array.from(event.dataTransfer.types).includes('Files')) return;
+      event.preventDefault(); $('dropZone').classList.add('drop-target');
+    });
+    $('dropZone').ondragleave = () => $('dropZone').classList.remove('drop-target');
+    $('dropZone').ondrop = event => {
+      event.preventDefault(); $('dropZone').classList.remove('drop-target');
+      if (event.dataTransfer.files.length) uploadFiles(event.dataTransfer.files);
+    };
+    $('files').addEventListener('touchstart', event => {
+      const point = event.touches[0];
+      if (event.touches.length !== 1 || !point || point.clientX < 28 || point.clientX > innerWidth - 28 || event.target.closest('input,.row-actions')) { swipeStart = null; return; }
+      swipeStart = {x: point.clientX, y: point.clientY};
+    }, {passive: true});
+    $('files').addEventListener('touchend', event => {
+      if (!swipeStart || !event.changedTouches[0]) return;
+      const point = event.changedTouches[0], dx = point.clientX - swipeStart.x, dy = point.clientY - swipeStart.y;
+      swipeStart = null;
+      if (Math.abs(dx) > 80 && Math.abs(dy) < 45 && Math.abs(dx) > Math.abs(dy) * 2) changePage(dx < 0 ? 1 : -1);
+    }, {passive: true});
+    $('files').addEventListener('touchcancel', () => { swipeStart = null; }, {passive: true});
+  }
+  function restoreHash() {
+    let value;
+    try { value = decodeURIComponent(location.hash.slice(1)); } catch { value = 'all'; }
+    const valid = ['all', 'favorites', ...Object.keys(C.TYPES)].includes(value) || state.meta.collections.some(c => 'c:' + c.id === value);
+    navigate(valid ? value : 'all', false);
+  }
+  document.querySelectorAll('[data-icon]').forEach(element => { element.innerHTML = icon(element.dataset.icon); });
+  applyTheme();
+  bindEvents();
+  restoreHash();
+  loadFiles();
+})();
+
+</script>
+</body>
+</html>
